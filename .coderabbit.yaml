@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+language: "en-US"
+
+reviews:
+  profile: "chill"
+  review_status: true
+  high_level_summary: true
+  path_filters:
+    - "!node_modules/**"
+    - "!**/dist/**"
+    - "!**/build/**"
+    - "!**/.next/**"
+    - "!**/*.lock"
+    - "!package-lock.json"
+    - "!pnpm-lock.yaml"
+    - "!yarn.lock"
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+    title:
+      mode: "warning"
+      requirements: "Title should be concise and descriptive, ideally under 50 characters, written in imperative mood, and must not contain 'WIP' or 'Draft'."
+    description:
+      mode: "warning"
+    issue_assessment:
+      mode: "warning"
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - ".*"

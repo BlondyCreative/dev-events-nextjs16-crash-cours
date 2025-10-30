@@ -1,0 +1,3 @@
+# This directory stores uploaded images during local development
+
+CLOUDINARY_URL=cloudinary://136476141862487:ec282XvZp5UvOVBPUNMlaQSPcRs@dqd9axzdi

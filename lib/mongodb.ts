@@ -1,69 +1,74 @@
-import mongoose, { ConnectOptions } from "mongoose";
 
-/**
- * MongoDB connection helper for Next.js (TypeScript + Mongoose).
- *
- * - Validates the presence of the MONGODB_URI environment variable.
- * - Caches the connection on the global object to avoid creating multiple
- *   connections during development (Next.js hot reloading).
- * - Provides strong typings (no `any`).
- */
+import mongoose from 'mongoose';
 
-// Read and validate the MongoDB connection string from environment variables.
+// Define the MongoDB connection string from environment variables
+
+
+
 const MONGODB_URI = process.env.MONGODB_URI;
-if (!MONGODB_URI || MONGODB_URI.length === 0) {
-  throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
-}
-// Narrow the type after validation so it is treated as a definite string.
-const MONGODB_URI_STR: string = MONGODB_URI;
 
-// A strongly-typed cached connection shape.
-type MongooseConnection = typeof mongoose;
-interface Cached {
-  conn: MongooseConnection | null;
-  promise: Promise<MongooseConnection> | null;
+if (!MONGODB_URI) {
+  throw new Error(
+    'Please define the MONGODB_URI environment variable inside .env.local'
+  );
 }
 
-// Augment the Node.js global type so we can safely attach a cache.
+
+// Define TypeScript interface for the global mongoose cache
+interface MongooseCache {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+}
+
+// Extend the global namespace to include mongoose cache
 declare global {
-  var _mongooseCache: Cached | undefined;
+  var mongoose: MongooseCache | undefined;
 }
 
-// Reuse an existing cache if present, otherwise initialize a new one.
-const cached: Cached = globalThis._mongooseCache ?? { conn: null, promise: null };
+// Initialize the cached connection object
+const cached: MongooseCache = global.mongoose || { conn: null, promise: null };
+
+if (!global.mongoose) {
+  global.mongoose = cached;
+}
 
 /**
- * Establishes (or reuses) a Mongoose connection.
- *
- * This function is safe to call multiple times across API routes, Route Handlers,
- * and server components, as it reuses the same connection in development.
+ * Establishes and maintains a cached connection to MongoDB.
+ * This prevents multiple connections from being created during development
+ * when Next.js hot-reloads modules.
+ * 
+ * @returns Promise resolving to the Mongoose instance
  */
-export async function connectToDatabase(): Promise<MongooseConnection> {
-  // Return existing connection if already established.
-  if (cached.conn) return cached.conn;
+async function connectDB(): Promise<typeof mongoose> {
+  // Return existing connection if available
+  if (cached.conn) {
+    return cached.conn;
+  }
 
-  // Create a new connection promise if one isn't already in-flight.
+  // Return existing connection promise if one is in progress
   if (!cached.promise) {
-    const opts: ConnectOptions = {
-      bufferCommands: false, // rely on driver buffering, avoid Mongoose buffering
-      maxPoolSize: 10, // reasonable default pool size
-      serverSelectionTimeoutMS: 5000, // fast fail if server is unreachable
+    const opts = {
+      bufferCommands: false, // Disable mongoose buffering
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI_STR, opts);
+    // Create new connection promise
+    cached.promise = mongoose.connect(MONGODB_URI as string, opts).then((mongoose) => {
+      return mongoose;
+    });
   }
 
   try {
+    // Wait for connection to complete and cache it
     cached.conn = await cached.promise;
-  } catch (err) {
-    // Reset the promise so future calls can retry after a failure.
+  } catch (e) {
+    // Reset promise on error to allow retry
     cached.promise = null;
-    throw err;
+    throw e;
   }
 
-  // Persist the cache on the global object for reuse (especially during HMR).
-  globalThis._mongooseCache = cached;
   return cached.conn;
 }
 
-export default connectToDatabase;
+export default connectDB;
+
+

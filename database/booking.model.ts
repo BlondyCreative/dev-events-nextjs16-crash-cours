@@ -1,53 +1,56 @@
-import { Schema, model, models, type Model, type HydratedDocument, Types } from "mongoose";
-import { Event } from "./event.model";
+import { Schema, model, models, Document, Types } from 'mongoose';
+import Event from './event.model';
 
-export interface IBooking {
-  eventId: Types.ObjectId; // ref -> Event
+export interface IBooking extends Document {
+  eventId: Types.ObjectId;
   email: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
-
-export type BookingDocument = HydratedDocument<IBooking>;
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
 const BookingSchema = new Schema<IBooking>(
   {
-    eventId: { type: Schema.Types.ObjectId, ref: "Event", required: true, index: true },
+    eventId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Event',
+      required: [true, 'Event ID is required'],
+    },
     email: {
       type: String,
-      required: true,
+      required: [true, 'Email is required'],
       lowercase: true,
       trim: true,
-      validate: {
-        validator: (v: string) => EMAIL_RE.test(v),
-        message: "Invalid email format",
-      },
+      match: [
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        'Please provide a valid email address',
+      ],
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-// Index to speed up lookups by eventId
+// Create index on eventId for optimized queries
 BookingSchema.index({ eventId: 1 });
-
-// Pre-save validation: verify event existence and re-validate email
-BookingSchema.pre<BookingDocument>("save", async function preSave(next) {
+// Validate that the referenced event exists before saving
+BookingSchema.pre('save', async function (next) {
   try {
-    if (!this.eventId) throw new Error("eventId is required");
+    // Check if eventId is modified or new document
+    if (this.isModified('eventId') || this.isNew) {
+      const eventExists = await Event.findById(this.eventId);
 
-    // Ensure referenced Event exists to avoid dangling bookings
-    const exists = await Event.exists({ _id: this.eventId }).lean();
-    if (!exists) throw new Error("Referenced event does not exist");
-
-    if (!EMAIL_RE.test(this.email)) throw new Error("Invalid email format");
+      if (!eventExists) {
+        throw new Error(`Event with ID ${this.eventId} does not exist`);
+      }
+    }
 
     next();
-  } catch (err) {
-    next(err as Error);
+  } catch (error) {
+    next(error as Error);
   }
 });
 
-export const Booking: Model<IBooking> = (models.Booking as Model<IBooking>) || model<IBooking>("Booking", BookingSchema);
+const Booking = models.Booking || model<IBooking>('Booking', BookingSchema);
+
 export default Booking;
