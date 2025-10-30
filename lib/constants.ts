@@ -5,7 +5,9 @@ export type EventItem = {
   location: string;
   date: string; // e.g., "2025-11-07"
   time: string; // e.g., "09:00 AM"
+  agenda: string
 };
+
 
 // Curated list of upcoming/popular developer events.
 // Image 💡 Refactor Q < > ⚡️lic/images and can be used directly with next
@@ -17,6 +19,7 @@ export const events: EventItem[] = [
     slug: "react-summit-us-2025",
     location: "San Francisco, CA, USA",
     date: "2025-11-07",
+     agenda: "9:00AM 6:00AM",
     time: "09:00 AM",
   },
   {
@@ -24,6 +27,7 @@ export const events: EventItem[] = [
     title: "KubeCon + CloudNativeCon Europe 2026",
     slug: "kubecon-cloudnativecon-europe-2026",
     location: "Paris, France",
+     agenda: "9:00AM 6:00AM",
     date: "2026-03-24",
     time: "09:00 AM",
   },
@@ -32,6 +36,7 @@ export const events: EventItem[] = [
     title: "AWS re:invert 2025",
     slug: "AWS re:invert 2025",
     location: "Paris, France",
+     agenda: "9:00AM 6:00AM",
     date: "2026-03-24",
     time: "09:00 AM",
   },
@@ -40,6 +45,7 @@ export const events: EventItem[] = [
     title: "Next.js Config 2025",
     slug: "kubecon-cloudnativecon-europe-2026",
     location: "Paris, France",
+     agenda: "9:00AM 6:00AM",
     date: "2026-03-24",
     time: "09:00 AM",
   },
@@ -49,6 +55,7 @@ export const events: EventItem[] = [
     slug: "Google Cloud Next 2026",
     location: "Paris, France",
     date: "2026-03-24",
+    agenda: "9:00AM 6:00AM",
     time: "09:00 AM",
   },
       {
@@ -56,7 +63,9 @@ export const events: EventItem[] = [
     title: "ETHGlobal Hackaton: paris 2026 ",
     slug: "ETHGlobal Hackaton: paris 2026 ",
     location: "Paris, France",
+     agenda: "9:00AM 6:00AM",
     date: "2026-03-24",
     time: "09:00 AM",
   },
 ];
+
